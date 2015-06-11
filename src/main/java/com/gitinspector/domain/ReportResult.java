@@ -1,7 +1,3 @@
-/*
- * Copyright Homeaway, Inc 2015-Present. All Rights Reserved.
- * No unauthorized use of this software.
- */
 package com.gitinspector.domain;
 
 import com.gitinspector.domain.recordable.ReportingRecordable;
