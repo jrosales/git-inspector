@@ -10,19 +10,34 @@
     <name>git-inspector</name>
     <description>TODO: supply a description</description>
 
-    <!--<repositories>-->
-        <!--<repository>-->
-            <!--<id>homeaway</id>-->
-            <!--<name>Homeaway Proxy Repository</name>-->
-            <!--<layout>default</layout>-->
-            <!--<url>http://mvn-repo.wvrgroup.internal/maven</url>-->
-            <!--<snapshots>-->
-                <!--<enabled>true</enabled>-->
-                <!--<updatePolicy>daily</updatePolicy>-->
-                <!--<checksumPolicy>warn</checksumPolicy>-->
-            <!--</snapshots>-->
-        <!--</repository>-->
-    <!--</repositories>-->
+    <!--TODO: remove this homeaway specific stuff-->
+    <distributionManagement>
+   		<repository>
+   			<id>homeaway</id>
+   			<name>HomeAway Services Nexus Repo</name>
+   			<url>http://mvn-repo.wvrgroup.internal:8081/nexus/content/repositories/releases</url>
+   		</repository>
+
+   		<snapshotRepository>
+   			<id>homeaway-snapshots</id>
+   			<name>HomeAway Services Snapshot Nexus Repo</name>
+   			<url>http://mvn-repo.wvrgroup.internal:8081/nexus/content/repositories/snapshots</url>
+   		</snapshotRepository>
+   	</distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>homeaway</id>
+            <name>Homeaway Proxy Repository</name>
+            <layout>default</layout>
+            <url>http://mvn-repo.wvrgroup.internal/maven</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <dependencies>
         <dependency>
@@ -66,6 +81,13 @@
         </dependency>
 
         <!-- ==================== Test Scope ==================== -->
+
+        <dependency>
+   			<groupId>org.mockito</groupId>
+   			<artifactId>mockito-core</artifactId>
+   			<version>1.9.5</version>
+   			<scope>test</scope>
+       	</dependency>
 
         <dependency>
             <groupId>junit</groupId>
