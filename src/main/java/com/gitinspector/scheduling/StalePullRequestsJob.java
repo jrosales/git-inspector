@@ -61,11 +61,8 @@ public class StalePullRequestsJob extends AbstractScheduledTask<StaleObject> {
             final List<GHPullRequest> pullRequests = repository.getPullRequests(GHIssueState.OPEN);
             for (GHPullRequest pullRequest : pullRequests) {
                 String stalePullRequestName = repoFullName + "/pull/" + Integer.toString(pullRequest.getNumber());
-                System.out.println("stalePullRequestName = " + stalePullRequestName);
-                System.out.println("** head: " + pullRequest.getHead().getSha() + " : base: " + pullRequest.getBase().getSha());
                 final GHCommit commit = repository.getCommit(pullRequest.getHead().getSha());
                 final Date date = commit.getCommitShortInfo().getCommitter().getDate();
-                System.out.println("date = " + date);
                 final LocalDate lastUpdateDate = LocalDate.fromDateFields(pullRequest.getUpdatedAt());
 
                 final boolean isPullRequestStale = Days.daysBetween(lastUpdateDate, now).getDays() > daysSinceLastCommit;
