@@ -11,6 +11,12 @@ import com.gitinspector.stats.GitStatisticsTracker;
 import com.gitinspector.stats.StatsLevel;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
+import org.joda.time.DateTime;
+import org.kohsuke.github.GHCommit;
+import org.kohsuke.github.GHRepository;
+
+import java.io.IOException;
+import java.util.List;
 
 /**
  * Abstract class for all git related scheduled tasks.
@@ -136,4 +142,29 @@ public abstract class AbstractScheduledTask<V extends ReportingRecordable> imple
         return StringUtils.substringBefore(repoFullName, "/");
     }
 
+    //TODO: Move this to a utility class
+    protected void assembleCommits(GHRepository repo, GHCommit currentCommit, List<GHCommit> assembledCommits, int numberOfDaysThreshold)
+            throws IOException {
+        // NOTE: "parent" commits are predecessor commits (i.e. the commits that lead up to the current commit)
+
+        // check if the current commit is within our time threshold and if not, don't bother adding it or continuing
+        DateTime commitDate = new DateTime(currentCommit.getCommitShortInfo().getCommitter().getDate());
+        if (commitDate.isBefore(DateTime.now().minusDays(numberOfDaysThreshold))) {
+            return;
+        }
+
+        // go ahead and add the current commit
+        assembledCommits.add(currentCommit);
+
+        // check if this commit has any parents and if not, end our recursion
+        final List<String> parentSHA1s = currentCommit.getParentSHA1s();
+        if(parentSHA1s == null || parentSHA1s.isEmpty()) {
+            return;
+        }
+
+        // recurse over all of the parents
+        for(String parentSHA1 : parentSHA1s) {
+            assembleCommits(repo, repo.getCommit(parentSHA1), assembledCommits, numberOfDaysThreshold);
+        }
+    }
 }

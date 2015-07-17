@@ -62,20 +62,19 @@ public class StalePullRequestsJob extends AbstractScheduledTask<StaleObject> {
             for (GHPullRequest pullRequest : pullRequests) {
                 String stalePullRequestName = repoFullName + "/pull/" + Integer.toString(pullRequest.getNumber());
                 final GHCommit commit = repository.getCommit(pullRequest.getHead().getSha());
-                final Date date = commit.getCommitShortInfo().getCommitter().getDate();
-                final LocalDate lastUpdateDate = LocalDate.fromDateFields(pullRequest.getUpdatedAt());
+                final LocalDate lastCommitDate = LocalDate.fromDateFields(commit.getCommitShortInfo().getCommitter().getDate());
 
-                final boolean isPullRequestStale = Days.daysBetween(lastUpdateDate, now).getDays() > daysSinceLastCommit;
+                final boolean isPullRequestStale = Days.daysBetween(lastCommitDate, now).getDays() > daysSinceLastCommit;
                 if (isPullRequestStale) {
                     reportResult.addViolation(
-                        new StaleObject(
-                            getOrgNameFromRepoName(repoFullName),
-                            repoFullName,
-                            getOwnerUsername(repoFullName),
-                            stalePullRequestName,
-                            getLastTouchedBy(pullRequest),
-                            lastUpdateDate.toString(LAST_TOUCH_DATE_FORMAT)
-                        )
+                            new StaleObject(
+                                    getOrgNameFromRepoName(repoFullName),
+                                    repoFullName,
+                                    getOwnerUsername(repoFullName),
+                                    stalePullRequestName,
+                                    getLastTouchedBy(pullRequest),
+                                    lastCommitDate.toString(LAST_TOUCH_DATE_FORMAT)
+                            )
                     );
                 }
 

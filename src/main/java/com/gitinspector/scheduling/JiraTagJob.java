@@ -51,7 +51,7 @@ public class JiraTagJob extends AbstractScheduledTask<Violation> {
             final GHBranch masterBranch = repo.getBranches().get(repo.getMasterBranch());
             final GHCommit masterTipCommit = repo.getCommit(masterBranch.getSHA1());
             List<GHCommit> masterCommits = new ArrayList<>();
-            assembleCommits(repo, masterTipCommit, masterCommits);
+            assembleCommits(repo, masterTipCommit, masterCommits, numberOfDaysThreshold);
 
             for (GHCommit commit : masterCommits) {
                 String commitMessage = commit.getCommitShortInfo().getMessage();
@@ -75,31 +75,6 @@ public class JiraTagJob extends AbstractScheduledTask<Violation> {
         }
 
         return reportResult;
-    }
-
-    private void assembleCommits(GHRepository repo, GHCommit currentCommit, List<GHCommit> assembledCommits)
-        throws IOException {
-        // NOTE: "parent" commits are predecessor commits (i.e. the commits that lead up to the current commit)
-
-        // check if the current commit is within our time threshold and if not, don't bother adding it or continuing
-        DateTime commitDate = new DateTime(currentCommit.getCommitShortInfo().getCommitter().getDate());
-        if (commitDate.isBefore(DateTime.now().minusDays(numberOfDaysThreshold))) {
-            return;
-        }
-
-        // go ahead and add the current commit
-        assembledCommits.add(currentCommit);
-
-        // check if this commit has any parents and if not, end our recursion
-        final List<String> parentSHA1s = currentCommit.getParentSHA1s();
-        if(parentSHA1s == null || parentSHA1s.isEmpty()) {
-            return;
-        }
-
-        // recurse over all of the parents
-        for(String parentSHA1 : parentSHA1s) {
-            assembleCommits(repo, repo.getCommit(parentSHA1), assembledCommits);
-        }
     }
 
     @ManagedAttribute
