@@ -6,12 +6,14 @@ package com.gitinspector.domain.recordable;
 public class StaleObject extends Violation {
 
     private String staleObjectName;
+
     private String lastCommitter;
+
     private String formattedLastCommitDate;
 
-    public StaleObject(String orgName, String repoFullName, String owner, String staleObjectName, String lastCommitter,
-                       String formattedLastCommitDate) {
-        super(orgName, repoFullName, owner);
+    public StaleObject(String orgName, String repoFullName, String repoOwner, String staleObjectName, String lastCommitter,
+        String formattedLastCommitDate) {
+        super(orgName, repoFullName, repoOwner);
         this.staleObjectName = staleObjectName;
         this.lastCommitter = lastCommitter;
         this.formattedLastCommitDate = formattedLastCommitDate;
@@ -32,8 +34,8 @@ public class StaleObject extends Violation {
     @Override
     public String toString() {
         return super.toString() +
-               " staleObjectName=" + staleObjectName +
-               " lastCommitter=" + lastCommitter +
-               " formattedLastCommitDate=" + formattedLastCommitDate;
+            " staleObjectName=" + staleObjectName +
+            " lastCommitter=" + lastCommitter +
+            " formattedLastCommitDate=" + formattedLastCommitDate;
     }
 }

@@ -2,6 +2,7 @@ package com.gitinspector.scheduling;
 
 import com.gitinspector.TargetRepositories;
 import com.gitinspector.domain.ReportResult;
+import com.gitinspector.domain.recordable.BadCommit;
 import com.gitinspector.domain.recordable.StringStatistic;
 import com.gitinspector.domain.recordable.Violation;
 import com.gitinspector.ownership.RepoOwnership;
@@ -12,12 +13,8 @@ import com.gitinspector.scheduling.codereviewstrategy.ValidCodeReviewStrategy;
 import com.gitinspector.scheduling.codereviewstrategy.ValidCommitMessageStrategy;
 import com.gitinspector.stats.GitStatisticsTracker;
 import org.apache.commons.collections4.CollectionUtils;
-import org.joda.time.Days;
-import org.joda.time.LocalDate;
 import org.kohsuke.github.GHBranch;
 import org.kohsuke.github.GHCommit;
-import org.kohsuke.github.GHIssueState;
-import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,12 +36,13 @@ public class ValidCodeReviewJob extends AbstractScheduledTask<Violation> {
     private static final Logger log = LoggerFactory.getLogger(ValidCodeReviewJob.class);
 
     private static final String COMMITS = "Commits";
+
     private static final String WITH_VALID_CODE_REVIEWS = "WithValidCodeReviews";
 
     private int numberOfDaysThreshold;
 
     public ValidCodeReviewJob(TargetRepositories targetRepositories, TaskMessageRecorder messageRecorder,
-                              RepoOwnership repoOwnership, int numberOfDaysThreshold) {
+        RepoOwnership repoOwnership, int numberOfDaysThreshold) {
         super(messageRecorder, repoOwnership, targetRepositories);
         this.numberOfDaysThreshold = numberOfDaysThreshold;
     }
@@ -65,22 +63,20 @@ public class ValidCodeReviewJob extends AbstractScheduledTask<Violation> {
 
             PullRequestFetcher pullRequestFetcher = new PullRequestFetcher(repository, numberOfDaysThreshold);
 
-            //iterate over the master commits we've assembled to verify
-            //if the commit was valid
+            // iterate over the master commits we've assembled to verify if the commit was valid
             for (GHCommit commit : masterCommits) {
                 boolean isCommitValid = false;
 
-                //iterate over the strategies we have in place for validating if our
-                //commit is valid
+                // iterate over the strategies we have in place for validating if our commit is valid
                 final Iterator<ValidCodeReviewStrategy> strategyIterator = validCodeReviewStrategies.iterator();
-                while(strategyIterator.hasNext() && !isCommitValid) {
+                while (strategyIterator.hasNext() && !isCommitValid) {
                     final ValidCodeReviewStrategy strategy = strategyIterator.next();
                     isCommitValid = strategy.isCommitValid(commit, pullRequestFetcher);
                 }
 
                 if (!isCommitValid) {
-                    reportResult.addViolation(new Violation(getOrgNameFromRepoName(repoFullName),
-                            repoFullName, getOwnerUsername(repoFullName)));
+                    reportResult.addViolation(new BadCommit(getOrgNameFromRepoName(repoFullName), repoFullName,
+                        getOwnerUsername(repoFullName), commit.getCommitShortInfo().getCommitter().getName(), commit.getSHA1()));
                 }
 
                 statsTracker.addHitToRepo(repoFullName, isCommitValid);
@@ -113,6 +109,6 @@ public class ValidCodeReviewJob extends AbstractScheduledTask<Violation> {
 
     @Override
     public String getRuleMessage() {
-        return "Commit must have a \"reviewed by\" in the comment or must be associated with a Jira ticket.";
+        return "Commit must have a \"reviewed by\" in the comment or must be associated with closed Pull Request.";
     }
 }

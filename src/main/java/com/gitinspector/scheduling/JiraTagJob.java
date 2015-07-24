@@ -2,19 +2,18 @@ package com.gitinspector.scheduling;
 
 import com.gitinspector.TargetRepositories;
 import com.gitinspector.domain.ReportResult;
+import com.gitinspector.domain.recordable.BadCommit;
 import com.gitinspector.domain.recordable.StringStatistic;
 import com.gitinspector.domain.recordable.Violation;
 import com.gitinspector.ownership.RepoOwnership;
 import com.gitinspector.recording.TaskMessageRecorder;
 import com.gitinspector.stats.GitStatisticsTracker;
-import org.joda.time.DateTime;
 import org.kohsuke.github.GHBranch;
 import org.kohsuke.github.GHCommit;
 import org.kohsuke.github.GHRepository;
 import org.springframework.jmx.export.annotation.ManagedAttribute;
 import org.springframework.jmx.export.annotation.ManagedResource;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -29,12 +28,13 @@ import static com.gitinspector.stats.StatsLevel.REPOSITORY_LEVEL;
 public class JiraTagJob extends AbstractScheduledTask<Violation> {
 
     private static final String JIRA_TAGS = "JiraTags";
+
     private static final String WITH_VALID_JIRA_TAGS = "WithValidJiraTag";
 
     private int numberOfDaysThreshold;
 
     public JiraTagJob(TargetRepositories targetRepositories, TaskMessageRecorder messageRecorder,
-                      RepoOwnership repoOwnership, int numberOfDaysThreshold) {
+        RepoOwnership repoOwnership, int numberOfDaysThreshold) {
         super(messageRecorder, repoOwnership, targetRepositories);
         this.numberOfDaysThreshold = numberOfDaysThreshold;
     }
@@ -59,8 +59,8 @@ public class JiraTagJob extends AbstractScheduledTask<Violation> {
                 boolean isCommitValid = isCommitValid(commitMessage);
 
                 if (!isCommitValid) {
-                    reportResult.addViolation(new Violation(getOrgNameFromRepoName(repoFullName),
-                        repoFullName, getOwnerUsername(repoFullName)));
+                    reportResult.addViolation(new BadCommit(getOrgNameFromRepoName(repoFullName), repoFullName,
+                        getOwnerUsername(repoFullName), commit.getCommitShortInfo().getCommitter().getName(), commit.getSHA1()));
                 }
 
                 statsTracker.addHitToRepo(repoFullName, isCommitValid);

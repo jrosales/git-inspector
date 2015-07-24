@@ -7,8 +7,8 @@ import com.gitinspector.domain.RecordableType;
  */
 public class Violation extends ReportingRecordable {
 
-    public Violation(String orgName, String repoFullName, String owner) {
-        super(RecordableType.VIOLATION, orgName, repoFullName, owner);
+    public Violation(String orgName, String repoFullName, String repoOwner) {
+        super(RecordableType.VIOLATION, orgName, repoFullName, repoOwner);
     }
 
     @Override
