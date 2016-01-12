@@ -41,24 +41,22 @@ public class ProfanityCheckerJob extends AbstractScheduledTask<Violation> {
 
     private GitHub gitHub;
 
-    private List<String> searchTerms;
-
     private List<Pattern> searchPatterns;
 
-    @Value("${git-inspector.profanityListPath:''}")
-    String profanityList;
+    private List<String> profanityList;
 
-    public ProfanityCheckerJob(TargetRepositories targetRepositories, TaskMessageRecorder messageRecorder, RepoOwnership repoOwnership,
-        int numberOfDaysThreshold, GitHub gitHub) {
+    public ProfanityCheckerJob(TargetRepositories targetRepositories, TaskMessageRecorder messageRecorder,
+                               RepoOwnership repoOwnership, int numberOfDaysThreshold, GitHub gitHub,
+                               List<String> profanityList) {
         super(messageRecorder, repoOwnership, targetRepositories);
         this.numberOfDaysThreshold = numberOfDaysThreshold;
         this.gitHub = gitHub;
+        this.profanityList = profanityList;
     }
 
     @Override
     public ReportResult<Violation, StringStatistic> execute() throws Exception {
         ReportResult<Violation, StringStatistic> reportResult = new ReportResult<>();
-        searchTerms = Splitter.on(",").omitEmptyStrings().splitToList(profanityList);
 
         for (GHRepository repository : targetRepositories.getTargetedRepositories()) {
             addOrgLevelStatsStats(reportResult, checkFiles(repository, reportResult),
@@ -99,16 +97,16 @@ public class ProfanityCheckerJob extends AbstractScheduledTask<Violation> {
 
         for (GHCommit commit : masterCommits) {
             hasProfanity = false;
+            String commitMessage = commit.getCommitShortInfo().getMessage();
 
-            for (String term : searchTerms) {
-                String commitMessage = commit.getCommitShortInfo().getMessage();
-
+            for (String term : profanityList) {
                 Pattern pattern = Pattern.compile(term);
                 if (pattern.matcher(commitMessage).find()) {
                     reportResult.addViolation(
                         new BadCommit(getOrgNameFromRepoName(repoFullName), repoFullName, getOwnerUsername(repoFullName),
                             commit.getCommitShortInfo().getCommitter().getName(), commit.getSHA1()));
                     hasProfanity = true;
+                    break;
                 }
             }
 
@@ -127,7 +125,7 @@ public class ProfanityCheckerJob extends AbstractScheduledTask<Violation> {
         GitStatisticsTracker srcTracker = new GitStatisticsTracker(STATS_TRACKER_SRC_NAME);
         String repoFullName = repository.getFullName();
 
-        for (String term : searchTerms) {
+        for (String term : profanityList) {
             GHContentSearchBuilder search = gitHub.searchContent();
             search.repo(repository.getFullName()).q("\"" + term + "\"");
             PagedSearchIterable<GHContent> list = search.list();
